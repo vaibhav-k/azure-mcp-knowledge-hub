@@ -63,48 +63,30 @@ resource documentApp 'Microsoft.Web/sites@2023-12-01' = {
 resource employeeApp 'Microsoft.Web/sites@2023-12-01' = {
 
   name: 'azmcp-employee-${environment}-${uniqueString(resourceGroup().id)}'
-
-
   location: location
-
-
   identity: {
 
     type: 'SystemAssigned'
 
   }
-
-
   properties: {
 
     serverFarmId: plan.id
-
-
     siteConfig: {
-
       linuxFxVersion: 'PYTHON|3.12'
-
-
       appCommandLine: 'python -m employee_server.app'
-
-
       appSettings: [
-
         {
           name: 'SCM_DO_BUILD_DURING_DEPLOYMENT'
           value: 'true'
         }
-
         {
           name: 'DATABASE_URL'
 
           value: '@Microsoft.KeyVault(SecretUri=${keyVaultUri}secrets/database-url/)'
         }
-
       ]
-
     }
-
   }
 
 }

@@ -1,6 +1,5 @@
 targetScope = 'resourceGroup'
 
-
 param location string = resourceGroup().location
 param environment string = 'dev'
 
@@ -62,18 +61,6 @@ module appservice './appservice.bicep' = {
   }
 
 }
-
-
-// Commented out to avoid RBAC issues
-// module roles './roles.bicep' = {
-
-//   name: 'roles'
-//   params: {
-//     storageAccountName: storage.outputs.storageAccountName
-//     documentAppPrincipalId: appservice.outputs.documentPrincipalId
-//   }
-
-// }
 
 
 module secrets './secrets.bicep' = {
