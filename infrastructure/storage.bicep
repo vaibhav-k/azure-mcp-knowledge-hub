@@ -53,3 +53,8 @@ resource container 'Microsoft.Storage/storageAccounts/blobServices/containers@20
   }
 
 }
+
+
+output storageAccountId string = storageAccount.id
+
+output storageAccountName string = storageAccount.name

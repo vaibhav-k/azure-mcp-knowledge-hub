@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.45.15.27210",
-      "templateHash": "15542577035857650886"
+      "templateHash": "13428414084330907435"
     }
   },
   "parameters": {
@@ -16,9 +16,6 @@
     "environment": {
       "type": "string",
       "defaultValue": "dev"
-    },
-    "sqlAdminPassword": {
-      "type": "securestring"
     }
   },
   "resources": [
@@ -46,7 +43,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.45.15.27210",
-              "templateHash": "14254400049117452854"
+              "templateHash": "6671337023097238929"
             }
           },
           "parameters": {
@@ -90,7 +87,17 @@
                 "[resourceId('Microsoft.Storage/storageAccounts/blobServices', format('azmcphub{0}{1}', parameters('environment'), uniqueString(resourceGroup().id)), 'default')]"
               ]
             }
-          ]
+          ],
+          "outputs": {
+            "storageAccountId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Storage/storageAccounts', format('azmcphub{0}{1}', parameters('environment'), uniqueString(resourceGroup().id)))]"
+            },
+            "storageAccountName": {
+              "type": "string",
+              "value": "[format('azmcphub{0}{1}', parameters('environment'), uniqueString(resourceGroup().id))]"
+            }
+          }
         }
       }
     },
@@ -104,14 +111,11 @@
         },
         "mode": "Incremental",
         "parameters": {
-          "location": {
-            "value": "[parameters('location')]"
+          "sqlServerName": {
+            "value": "azure-mcp-knowledgehub-sql"
           },
-          "environment": {
-            "value": "[parameters('environment')]"
-          },
-          "administratorPassword": {
-            "value": "[parameters('sqlAdminPassword')]"
+          "databaseName": {
+            "value": "knowledgehub"
           }
         },
         "template": {
@@ -121,49 +125,33 @@
             "_generator": {
               "name": "bicep",
               "version": "0.45.15.27210",
-              "templateHash": "15133982293694695145"
+              "templateHash": "17631431227408732705"
             }
           },
           "parameters": {
-            "location": {
+            "sqlServerName": {
               "type": "string"
             },
-            "environment": {
-              "type": "string"
-            },
-            "administratorLogin": {
+            "databaseName": {
               "type": "string",
-              "defaultValue": "sqladmin"
-            },
-            "administratorPassword": {
-              "type": "securestring"
+              "defaultValue": "knowledgehub"
             }
           },
-          "resources": [
-            {
-              "type": "Microsoft.Sql/servers",
-              "apiVersion": "2022-05-01-preview",
-              "name": "[format('azmcp-sql-{0}-{1}', parameters('environment'), uniqueString(resourceGroup().id))]",
-              "location": "[parameters('location')]",
-              "properties": {
-                "administratorLogin": "[parameters('administratorLogin')]",
-                "administratorLoginPassword": "[parameters('administratorPassword')]"
-              }
+          "resources": [],
+          "outputs": {
+            "sqlServerName": {
+              "type": "string",
+              "value": "[parameters('sqlServerName')]"
             },
-            {
-              "type": "Microsoft.Sql/servers/databases",
-              "apiVersion": "2022-05-01-preview",
-              "name": "[format('{0}/{1}', format('azmcp-sql-{0}-{1}', parameters('environment'), uniqueString(resourceGroup().id)), 'knowledgehub')]",
-              "location": "[parameters('location')]",
-              "sku": {
-                "name": "Basic",
-                "tier": "Basic"
-              },
-              "dependsOn": [
-                "[resourceId('Microsoft.Sql/servers', format('azmcp-sql-{0}-{1}', parameters('environment'), uniqueString(resourceGroup().id)))]"
-              ]
+            "databaseName": {
+              "type": "string",
+              "value": "[parameters('databaseName')]"
+            },
+            "databaseId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.Sql/servers/databases', parameters('sqlServerName'), parameters('databaseName'))]"
             }
-          ]
+          }
         }
       }
     },
@@ -270,6 +258,183 @@
           ]
         }
       }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "appservice",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environment": {
+            "value": "[parameters('environment')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.45.15.27210",
+              "templateHash": "14228484945297908126"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string"
+            },
+            "environment": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Web/serverfarms",
+              "apiVersion": "2023-12-01",
+              "name": "[format('azmcp-plan-{0}', parameters('environment'))]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "B1",
+                "tier": "Basic"
+              },
+              "kind": "linux",
+              "properties": {
+                "reserved": true
+              }
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2023-12-01",
+              "name": "[format('azmcp-document-{0}-{1}', parameters('environment'), uniqueString(resourceGroup().id))]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('azmcp-plan-{0}', parameters('environment')))]",
+                "siteConfig": {
+                  "linuxFxVersion": "PYTHON|3.12",
+                  "appCommandLine": "python -m document_server.app",
+                  "appSettings": [
+                    {
+                      "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+                      "value": "true"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', format('azmcp-plan-{0}', parameters('environment')))]"
+              ]
+            },
+            {
+              "type": "Microsoft.Web/sites",
+              "apiVersion": "2023-12-01",
+              "name": "[format('azmcp-employee-{0}-{1}', parameters('environment'), uniqueString(resourceGroup().id))]",
+              "location": "[parameters('location')]",
+              "identity": {
+                "type": "SystemAssigned"
+              },
+              "properties": {
+                "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', format('azmcp-plan-{0}', parameters('environment')))]",
+                "siteConfig": {
+                  "linuxFxVersion": "PYTHON|3.12",
+                  "appCommandLine": "python -m employee_server.app",
+                  "appSettings": [
+                    {
+                      "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+                      "value": "true"
+                    }
+                  ]
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Web/serverfarms', format('azmcp-plan-{0}', parameters('environment')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "documentPrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', format('azmcp-document-{0}-{1}', parameters('environment'), uniqueString(resourceGroup().id))), '2023-12-01', 'full').identity.principalId]"
+            },
+            "employeePrincipalId": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.Web/sites', format('azmcp-employee-{0}-{1}', parameters('environment'), uniqueString(resourceGroup().id))), '2023-12-01', 'full').identity.principalId]"
+            },
+            "documentAppName": {
+              "type": "string",
+              "value": "[format('azmcp-document-{0}-{1}', parameters('environment'), uniqueString(resourceGroup().id))]"
+            },
+            "employeeAppName": {
+              "type": "string",
+              "value": "[format('azmcp-employee-{0}-{1}', parameters('environment'), uniqueString(resourceGroup().id))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "roles",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "storageAccountName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage'), '2025-04-01').outputs.storageAccountName.value]"
+          },
+          "documentAppPrincipalId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appservice'), '2025-04-01').outputs.documentPrincipalId.value]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.45.15.27210",
+              "templateHash": "14400204931525484648"
+            }
+          },
+          "parameters": {
+            "storageAccountName": {
+              "type": "string"
+            },
+            "documentAppPrincipalId": {
+              "type": "string"
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.Authorization/roleAssignments",
+              "apiVersion": "2022-04-01",
+              "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('documentAppPrincipalId'), 'blob-reader')]",
+              "properties": {
+                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]",
+                "principalId": "[parameters('documentAppPrincipalId')]",
+                "principalType": "ServicePrincipal"
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'appservice')]",
+        "[resourceId('Microsoft.Resources/deployments', 'storage')]"
+      ]
     }
   ]
 }

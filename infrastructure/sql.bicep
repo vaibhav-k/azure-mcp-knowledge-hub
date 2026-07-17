@@ -1,50 +1,26 @@
-param location string
+param sqlServerName string
 
-param environment string
-
-
-param administratorLogin string = 'sqladmin'
+param databaseName string = 'knowledgehub'
 
 
-@secure()
-param administratorPassword string
+resource sqlServer 'Microsoft.Sql/servers@2022-05-01-preview' existing = {
 
-
-resource sqlServer 'Microsoft.Sql/servers@2022-05-01-preview' = {
-
-name: 'azmcp-sql-${environment}-${uniqueString(resourceGroup().id)}'
-
-
-  location: location
-
-
-  properties: {
-
-    administratorLogin: administratorLogin
-
-    administratorLoginPassword: administratorPassword
-
-  }
+  name: sqlServerName
 
 }
 
 
-resource database 'Microsoft.Sql/servers/databases@2022-05-01-preview' = {
+resource database 'Microsoft.Sql/servers/databases@2022-05-01-preview' existing = {
 
   parent: sqlServer
 
-  name: 'knowledgehub'
-
-
-  location: location
-
-
-  sku: {
-
-    name: 'Basic'
-
-    tier: 'Basic'
-
-  }
+  name: databaseName
 
 }
+
+
+output sqlServerName string = sqlServer.name
+
+output databaseName string = database.name
+
+output databaseId string = database.id

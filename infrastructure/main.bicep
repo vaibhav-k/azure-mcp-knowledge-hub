@@ -6,10 +6,6 @@ param location string = resourceGroup().location
 param environment string = 'dev'
 
 
-@secure()
-param sqlAdminPassword string
-
-
 module storage './storage.bicep' = {
 
   name: 'storage'
@@ -25,9 +21,8 @@ module sql './sql.bicep' = {
 
   name: 'sql'
   params: {
-    location: location
-    environment: environment
-    administratorPassword: sqlAdminPassword
+    sqlServerName: 'azure-mcp-knowledgehub-sql'
+    databaseName: 'knowledgehub'
   }
 
 }
@@ -50,6 +45,28 @@ module monitor './monitor.bicep' = {
   params: {
     location: location
     environment: environment
+  }
+
+}
+
+
+module appservice './appservice.bicep' = {
+
+  name: 'appservice'
+  params: {
+    location: location
+    environment: environment
+  }
+
+}
+
+
+module roles './roles.bicep' = {
+
+  name: 'roles'
+  params: {
+    storageAccountName: storage.outputs.storageAccountName
+    documentAppPrincipalId: appservice.outputs.documentPrincipalId
   }
 
 }
