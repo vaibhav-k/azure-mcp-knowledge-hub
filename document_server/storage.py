@@ -2,12 +2,15 @@ from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
 from config import settings
-from schemas import DocumentMetadata
+from schemas import (
+    DocumentMetadata,
+    DocumentContent,
+)
 
 
 class BlobStorage:
     """
-    Azure Blob Storage abstraction.
+    Azure Blob Storage service layer.
     """
 
     def __init__(self):
@@ -20,16 +23,15 @@ class BlobStorage:
             credential=DefaultAzureCredential(),
         )
 
-    def list_documents(
-        self, container_name: str | None = None
-    ) -> list[DocumentMetadata]:
-        """
-        List documents from Azure Blob Storage.
-        """
+    def _container(self, container_name=None):
 
-        container_name = container_name or settings.AZURE_STORAGE_CONTAINER_NAME
+        return self.client.get_container_client(
+            container_name or settings.AZURE_STORAGE_CONTAINER_NAME
+        )
 
-        container = self.client.get_container_client(container_name)
+    def list_documents(self, container_name=None) -> list[DocumentMetadata]:
+
+        container = self._container(container_name)
 
         documents = []
 
@@ -47,9 +49,32 @@ class BlobStorage:
                     last_modified=str(blob.last_modified),
                     url=(
                         f"{settings.AZURE_STORAGE_ACCOUNT_URL}"
-                        f"/{container_name}/{blob.name}"
+                        f"/{container.container_name}"
+                        f"/{blob.name}"
                     ),
                 )
             )
 
         return documents
+
+    def search_documents(
+        self, query: str, container_name=None
+    ) -> list[DocumentMetadata]:
+
+        documents = self.list_documents(container_name)
+
+        query = query.lower()
+
+        return [doc for doc in documents if query in doc.name.lower()]
+
+    def get_document(self, name: str, container_name=None) -> DocumentContent:
+
+        container = self._container(container_name)
+
+        blob = container.get_blob_client(name)
+
+        data = blob.download_blob()
+
+        content = data.readall().decode("utf-8", errors="ignore")
+
+        return DocumentContent(name=name, content=content)

@@ -11,3 +11,12 @@ class DocumentMetadata(BaseModel):
     content_type: str | None = None
     last_modified: str | None = None
     url: str | None = None
+
+
+class DocumentContent(BaseModel):
+    """
+    Document content response.
+    """
+
+    name: str
+    content: str

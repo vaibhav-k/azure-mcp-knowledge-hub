@@ -69,7 +69,9 @@ The Document MCP Server provides MCP tools for accessing documents stored in Azu
 
 | Tool | Description |
 |------|-------------|
-| `list_documents` | Returns documents stored in an Azure Blob Storage container |
+| `list_documents` | Returns available documents |
+| `search_documents` | Searches documents by name |
+| `get_document` | Retrieves document content |
 
 ---
 
@@ -207,8 +209,8 @@ azure-mcp-knowledge-hub/
 # Development Roadmap
 - [x] Create Document MCP Server
 - [x] Connect Azure Blob Storage
-- [ ] Add document search
-- [ ] Add document content retrieval
+- [x] Add document search
+- [x] Add document content retrieval
 - [ ] Add Employee MCP Server
 - [ ] Add MCP Client
 - [ ] Add Azure deployment templates
