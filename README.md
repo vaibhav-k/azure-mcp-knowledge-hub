@@ -2,76 +2,167 @@
 
 A Model Context Protocol (MCP) based knowledge platform built with Azure services.
 
-The project demonstrates a multi-server MCP architecture using Azure Storage, Azure SQL, and AI-powered tools.
+This project demonstrates a multi-server MCP architecture where independent MCP servers provide access to enterprise knowledge sources using Azure Storage, Azure SQL Database, and secure Azure services.
 
-## Current Status
+---
 
-🚧 Under active development
+# Current Status
+
+✅ Active development
 
 Implemented:
 
-- ✅ Document MCP Server
-- ✅ Azure Blob Storage integration
-- ✅ Document listing tool
-
-Planned:
-
-- MCP Client
-- Employee MCP Server
-- Azure SQL integration
-- Azure Bicep deployment
-- Monitoring and CI/CD
+* ✅ Document MCP Server
+* ✅ Employee MCP Server
+* ✅ MCP Client supporting multiple MCP servers
+* ✅ Azure Blob Storage integration
+* ✅ Azure SQL Database integration
+* ✅ Azure Key Vault secret management
+* ✅ Azure App Service deployment
+* ✅ Azure Bicep infrastructure deployment
 
 ---
 
 # Architecture
 
-The platform consists of independent MCP services:
+The platform uses a multi-server MCP architecture:
 
-             MCP Client
-                 |
-    +------------+------------+
-    |                         |
-    v                         v
-Document MCP Server Employee MCP Server
-    |                         |
-    v                         v
-Azure Blob Storage     Azure SQL Database
+```
+                         MCP Client
+                              |
+              +---------------+---------------+
+              |                               |
+              v                               v
+     Document MCP Server              Employee MCP Server
+              |                               |
+              v                               v
+     Azure Blob Storage              Azure SQL Database
+
+
+                 Azure Key Vault
+                       |
+                       |
+              Application Secrets
+```
+
+## Request Flow
+
+1. MCP Client connects to multiple MCP servers.
+2. Document MCP Server provides document knowledge from Azure Blob Storage.
+3. Employee MCP Server provides employee information from Azure SQL Database.
+4. Secrets are securely managed through Azure Key Vault.
+5. Azure App Service Managed Identity is used for Azure authentication.
 
 ---
 
-# Infrastructure:
+# Azure Infrastructure
 
-- Azure App Service
-- Azure Storage Account
-- Azure SQL Database
-- Azure Key Vault
-- Azure Monitor
+The infrastructure is deployed using Azure Bicep.
+
+Provisioned resources:
+
+* Azure App Service Plan
+* Document MCP App Service
+* Employee MCP App Service
+* Azure Storage Account
+* Blob Container
+* Azure SQL Database (existing SQL Server)
+* Azure Key Vault
+* Application Insights / Azure Monitor
 
 ---
 
 # Tech Stack
 
-- Python
-- FastMCP
-- Azure Blob Storage
-- Azure SQL Database
-- Azure Identity
-- Azure Bicep
+## Application
+
+* Python 3.12
+* FastMCP
+* SQLAlchemy
+* PyODBC
+
+## Azure Services
+
+* Azure Blob Storage
+* Azure SQL Database
+* Azure Key Vault
+* Azure App Service
+* Azure Monitor
+* Azure Identity
+* Azure Bicep
 
 ---
 
-# Document MCP Server
+# MCP Servers
+
+## Document MCP Server
 
 The Document MCP Server provides MCP tools for accessing documents stored in Azure Blob Storage.
 
 ## Available Tools
 
-| Tool | Description |
-|-|-|
-| `list_documents` | Returns available documents |
-| `search_documents` | Searches documents by name |
-| `get_document` | Retrieves document content |
+| Tool               | Description                 |
+| ------------------ | --------------------------- |
+| `list_documents`   | Returns available documents |
+| `search_documents` | Searches documents by name  |
+| `get_document`     | Retrieves document content  |
+
+Configuration:
+
+```env
+AZURE_STORAGE_ACCOUNT_URL=https://<storage-account>.blob.core.windows.net
+AZURE_STORAGE_CONTAINER_NAME=documents
+```
+
+---
+
+## Employee MCP Server
+
+The Employee MCP Server exposes employee information through MCP tools.
+
+## Available Tools
+
+| Tool               | Description                   |
+| ------------------ | ----------------------------- |
+| `list_employees`   | Returns all employees         |
+| `get_employee`     | Returns employee records      |
+| `search_employees` | Searches employee information |
+
+Database:
+
+* Azure SQL Database
+* SQLAlchemy ORM
+* ODBC Driver 18 for SQL Server
+
+Configuration:
+
+```env
+DATABASE_URL=<azure-sql-connection-string>
+```
+
+In Azure deployment:
+
+* Connection string is stored in Azure Key Vault.
+* App Service retrieves it using Key Vault references.
+
+---
+
+# MCP Client
+
+The MCP Client connects to multiple MCP servers and provides a unified MCP interface.
+
+Connected servers:
+
+| Server              | Purpose                      |
+| ------------------- | ---------------------------- |
+| Document MCP Server | Azure Blob Storage knowledge |
+| Employee MCP Server | Employee information         |
+
+Run locally:
+
+```bash
+python -m client.app
+```
 
 ---
 
@@ -81,10 +172,10 @@ The Document MCP Server provides MCP tools for accessing documents stored in Azu
 
 Install:
 
-- Python 3.11+
-- Azure CLI
+* Python 3.12+
+* Azure CLI
 
-Login to Azure:
+Login:
 
 ```bash
 az login
@@ -94,14 +185,15 @@ az login
 
 # Installation
 
-## Clone repository:
+Clone repository:
 
 ```bash
 git clone https://github.com/vaibhav-k/azure-mcp-knowledge-hub.git
+
 cd azure-mcp-knowledge-hub
 ```
 
-## Install dependencies:
+Install dependencies:
 
 ```bash
 pip install -r requirements.txt
@@ -117,71 +209,99 @@ Create environment file:
 cp .env.example .env
 ```
 
-Update:
-
-```bash
-AZURE_STORAGE_ACCOUNT_URL=https://<storage-account>.blob.core.windows.net
-AZURE_STORAGE_CONTAINER_NAME=documents
-```
-
 Example:
 
-```bash
-AZURE_STORAGE_ACCOUNT_URL=https://azmcpstorage.blob.core.windows.net
+```env
+AZURE_STORAGE_ACCOUNT_URL=https://<storage-account>.blob.core.windows.net
 AZURE_STORAGE_CONTAINER_NAME=documents
+
+DATABASE_URL=<azure-sql-connection-string>
 ```
 
 ---
 
 # Authentication
 
-The application uses Azure:
+The application uses:
 
-```bash
+```python
 DefaultAzureCredential
 ```
 
-For local development:
+## Local Development
+
+Authenticate using Azure CLI:
 
 ```bash
 az login
 ```
 
-For Azure deployment:
+## Azure Deployment
 
-- Managed Identity will be used.
+Azure App Services use:
+
+* System Assigned Managed Identity
+* Azure Key Vault references
+* Azure Storage authentication
+
+No credentials are stored in application code.
 
 ---
 
-# Running the Document MCP Server
+# Running Locally
 
-From repository root:
+## Document MCP Server
 
 ```bash
-python ./document_server/app.py
+python -m document_server.app
 ```
 
-Expected output:
+Expected:
 
-```bash
+```
 Starting MCP server 'Document Server'
 ```
 
 ---
 
+## Employee MCP Server
+
+```bash
+python -m employee_server.app
+```
+
+Expected:
+
+```
+Starting Employee MCP Server
+```
+
+---
+
+## MCP Client
+
+```bash
+python -m client.app
+```
+
+The client connects to:
+
+* Document MCP Server
+* Employee MCP Server
+
+---
+
 # Testing
 
-## Document MCP Server Test
-
-Run the test:
+## Document MCP Server
 
 ```bash
 python ./tests/test_document_server.py
 ```
 
-Expected output:
+Expected:
 
-```bash
+```
 Available MCP tools:
 - list_documents
 - search_documents
@@ -190,34 +310,32 @@ Available MCP tools:
 
 ---
 
-## Employee MCP Server Test
-
-Run:
+## Employee MCP Server
 
 ```bash
 python ./tests/test_employee_server.py
 ```
 
-Expected output:
+Expected:
 
-```bash
+```
 Available Employee tools:
 - list_employees
 - get_employee
 - search_employees
 ```
 
-## MCP Client Test
+---
 
-Verify that the MCP client can connect to multiple MCP servers:
+## MCP Client
 
 ```bash
 python ./tests/test_client.py
 ```
 
-Expected output:
+Expected:
 
-```bash
+```
 Document MCP Server tools:
 - list_documents
 - search_documents
@@ -231,88 +349,91 @@ Employee MCP Server tools:
 
 ---
 
+# Azure Deployment
+
+Build Bicep:
+
+```bash
+az bicep build \
+ --file ./infrastructure/main.bicep
+```
+
+Deploy:
+
+```bash
+az deployment group create \
+ --resource-group <resource-group-name> \
+ --template-file ./infrastructure/main.bicep \
+ --parameters databaseUrl="<azure-sql-connection-string>"
+```
+
+Deployment creates:
+
+* MCP App Services
+* Storage resources
+* Key Vault
+* Monitoring resources
+
+---
+
 # Project Structure
 
 ```
 azure-mcp-knowledge-hub/
 
 ├── client/
+│   ├── app.py
+│   ├── router.py
+│   └── session.py
+│
 ├── document_server/
 │   ├── app.py
 │   ├── schemas.py
 │   ├── storage.py
 │   └── tools.py
+│
 ├── employee_server/
+│   ├── app.py
+│   ├── database.py
+│   ├── schemas.py
+│   └── tools.py
+│
 ├── infrastructure/
+│   ├── main.bicep
+│   ├── appservice.bicep
+│   ├── storage.bicep
+│   ├── sql.bicep
+│   ├── keyvault.bicep
+│   └── monitor.bicep
+│
 ├── scripts/
 ├── tests/
 ├── docs/
 └── README.md
 ```
----
-
-# Employee MCP Server
-
-The Employee MCP Server exposes employee information through MCP tools.
-
-## Available Tools
-
-| Tool | Description |
-|-|-|
-| `list_employees` | Returns all employees |
-| `get_employee` | Returns employee by ID |
-| `search_employees` | Searches employee records |
-
-## Database
-
-Uses:
-
-- SQLAlchemy
-- Azure SQL Database
-- ODBC Driver 18
-
-Configuration:
-
-```env
-DATABASE_URL=<azure-sql-connection-string>
-```
-
-## Current Storage
-
-Development mode uses an in-memory database.
-
-Production deployment will use Azure SQL Database.
-
----
-
-# MCP Client
-
-The MCP Client provides a unified interface to multiple MCP servers.
-
-Connected servers:
-
-| Server | Purpose |
-|-|-|
-| Document MCP Server | Azure Blob Storage knowledge |
-| Employee MCP Server | Employee information |
-
-Run:
-
-```bash
-python ./client/app.py
-```
 
 ---
 
 # Development Roadmap
-- [x] Create Document MCP Server
-- [x] Connect Azure Blob Storage
-- [x] Add document search
-- [x] Add document content retrieval
-- [ ] Add Employee MCP Server
-- [ ] Add MCP Client
-- [ ] Add Azure deployment templates
-- [ ] Add GitHub Actions CI/CD
+
+Completed:
+
+* [x] Create Document MCP Server
+* [x] Connect Azure Blob Storage
+* [x] Add document search
+* [x] Add document retrieval
+* [x] Create Employee MCP Server
+* [x] Add MCP Client
+* [x] Deploy Azure infrastructure with Bicep
+* [x] Integrate Azure Key Vault secrets
+
+Upcoming:
+
+* [ ] Add GitHub Actions CI/CD
+* [ ] Add automated integration tests
+* [ ] Add AI-powered document search
+* [ ] Add Azure AI Search integration
+* [ ] Add authentication and authorization layer
 
 ---
 
