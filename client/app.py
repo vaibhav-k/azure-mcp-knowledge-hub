@@ -1,8 +1,8 @@
 import asyncio
 
-from config import settings
-from session import MCPConnection
-from router import MCPRouter
+from .config import settings
+from .session import MCPConnection
+from .router import MCPRouter
 
 
 async def main():

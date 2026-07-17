@@ -1,58 +1,75 @@
-from schemas import Employee
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from .config import settings
+from .models import Base, EmployeeModel
+from .schemas import Employee
 
 
 class EmployeeDatabase:
-    """
-    Employee database abstraction.
-
-    This can later be replaced with Azure SQL.
-    """
 
     def __init__(self):
 
-        self.employees = [
-            Employee(
-                id=1,
-                name="Amit Sharma",
-                department="Engineering",
-                email="amit@example.com",
-                location="Noida",
-            ),
-            Employee(
-                id=2,
-                name="Priya Singh",
-                department="HR",
-                email="priya@example.com",
-                location="Delhi",
-            ),
-            Employee(
-                id=3,
-                name="Rahul Verma",
-                department="Finance",
-                email="rahul@example.com",
-                location="Mumbai",
-            ),
-        ]
+        if not settings.DATABASE_URL:
+            raise ValueError("DATABASE_URL is missing")
+
+        self.engine = create_engine(settings.DATABASE_URL)
+
+        Base.metadata.create_all(self.engine)
+
+        self.session = sessionmaker(bind=self.engine)
 
     def get_all(self):
 
-        return self.employees
+        with self.session() as db:
+
+            employees = db.query(EmployeeModel).all()
+
+            return [
+                Employee(
+                    id=e.id,
+                    name=e.name,
+                    department=e.department,
+                    email=e.email,
+                    location=e.location,
+                )
+                for e in employees
+            ]
 
     def get_by_id(self, employee_id: int):
 
-        for employee in self.employees:
+        with self.session() as db:
 
-            if employee.id == employee_id:
-                return employee
+            employee = (
+                db.query(EmployeeModel).filter(EmployeeModel.id == employee_id).first()
+            )
 
-        return None
+            if not employee:
+                return None
+
+            return Employee(
+                id=employee.id,
+                name=employee.name,
+                department=employee.department,
+                email=employee.email,
+                location=employee.location,
+            )
 
     def search(self, query: str):
 
-        query = query.lower()
+        with self.session() as db:
 
-        return [
-            employee
-            for employee in self.employees
-            if query in employee.name.lower() or query in employee.department.lower()
-        ]
+            employees = (
+                db.query(EmployeeModel).filter(EmployeeModel.name.contains(query)).all()
+            )
+
+            return [
+                Employee(
+                    id=e.id,
+                    name=e.name,
+                    department=e.department,
+                    email=e.email,
+                    location=e.location,
+                )
+                for e in employees
+            ]

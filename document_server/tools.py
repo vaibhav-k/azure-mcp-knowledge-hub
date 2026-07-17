@@ -1,4 +1,4 @@
-from storage import BlobStorage
+from .storage import BlobStorage
 
 _storage = None
 
@@ -20,7 +20,6 @@ def register_tools(mcp):
         """
         List available documents.
         """
-
         return get_storage().list_documents(container_name)
 
     @mcp.tool()
@@ -28,7 +27,6 @@ def register_tools(mcp):
         """
         Search documents by name.
         """
-
         return get_storage().search_documents(query, container_name)
 
     @mcp.tool()
@@ -36,5 +34,4 @@ def register_tools(mcp):
         """
         Retrieve document content.
         """
-
         return get_storage().get_document(name, container_name)

@@ -263,6 +263,20 @@ The Employee MCP Server exposes employee information through MCP tools.
 | `get_employee` | Returns employee by ID |
 | `search_employees` | Searches employee records |
 
+## Database
+
+Uses:
+
+- SQLAlchemy
+- Azure SQL Database
+- ODBC Driver 18
+
+Configuration:
+
+```env
+DATABASE_URL=<azure-sql-connection-string>
+```
+
 ## Current Storage
 
 Development mode uses an in-memory database.

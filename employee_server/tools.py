@@ -1,10 +1,9 @@
-from database import EmployeeDatabase
+from .database import EmployeeDatabase
 
 _database = None
 
 
 def get_database():
-
     global _database
 
     if _database is None:
@@ -14,13 +13,11 @@ def get_database():
 
 
 def register_tools(mcp):
-
     @mcp.tool()
     def list_employees():
         """
         Return all employees.
         """
-
         return get_database().get_all()
 
     @mcp.tool()
@@ -28,7 +25,6 @@ def register_tools(mcp):
         """
         Get employee by ID.
         """
-
         return get_database().get_by_id(employee_id)
 
     @mcp.tool()
@@ -36,5 +32,4 @@ def register_tools(mcp):
         """
         Search employees.
         """
-
         return get_database().search(query)
