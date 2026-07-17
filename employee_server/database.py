@@ -1,3 +1,5 @@
+from urllib.parse import quote_plus
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -10,11 +12,40 @@ class EmployeeDatabase:
 
     def __init__(self):
 
-        if not settings.DATABASE_URL:
-            raise ValueError("DATABASE_URL is missing")
+        if not all(
+            [
+                settings.DB_SERVER,
+                settings.DB_DATABASE,
+                settings.DB_USERNAME,
+                settings.DB_PASSWORD,
+            ]
+        ):
+            raise ValueError("Database configuration is missing")
 
-        self.engine = create_engine(settings.DATABASE_URL)
+        connection_string = (
+            "DRIVER={ODBC Driver 18 for SQL Server};"
+            f"SERVER=tcp:{settings.DB_SERVER},1433;"
+            f"DATABASE={settings.DB_DATABASE};"
+            f"UID={settings.DB_USERNAME};"
+            f"PWD={settings.DB_PASSWORD};"
+            "Encrypt=yes;"
+            "TrustServerCertificate=no;"
+        )
 
+        connection_url = "mssql+pyodbc:///?odbc_connect=" + quote_plus(
+            connection_string
+        )
+
+        print("Initializing Employee Database")
+
+        self.engine = create_engine(
+            connection_url,
+            pool_pre_ping=True,
+            pool_recycle=1800,
+        )
+
+        # Consider removing this in production.
+        # Use migrations (Alembic) instead.
         Base.metadata.create_all(self.engine)
 
         self.session = sessionmaker(bind=self.engine)
@@ -24,7 +55,6 @@ class EmployeeDatabase:
         with self.session() as db:
 
             employees = db.query(EmployeeModel).all()
-
             return [
                 Employee(
                     id=e.id,

@@ -17,10 +17,16 @@ class BlobStorage:
         if not settings.AZURE_STORAGE_ACCOUNT_URL:
             raise ValueError("AZURE_STORAGE_ACCOUNT_URL is missing")
 
-        self.client = BlobServiceClient(
-            account_url=settings.AZURE_STORAGE_ACCOUNT_URL,
-            credential=DefaultAzureCredential(),
-        )
+        if settings.AZURE_STORAGE_ACCOUNT_KEY:
+            self.client = BlobServiceClient(
+                account_url=settings.AZURE_STORAGE_ACCOUNT_URL,
+                credential=settings.AZURE_STORAGE_ACCOUNT_KEY,
+            )
+        else:
+            self.client = BlobServiceClient(
+                account_url=settings.AZURE_STORAGE_ACCOUNT_URL,
+                credential=DefaultAzureCredential(),
+            )
 
     def _container(self, container_name=None):
         return self.client.get_container_client(

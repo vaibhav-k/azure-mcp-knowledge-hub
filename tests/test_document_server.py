@@ -5,7 +5,7 @@ from fastmcp.client.transports import StdioTransport
 
 
 async def test_document_tools():
-    transport = StdioTransport(command="python", args=[".\\document_server\\app.py"])
+    transport = StdioTransport(command="python", args=["-m", "document_server.app"])
     client = Client(transport)
 
     async with client:

@@ -8,7 +8,7 @@ This project demonstrates a multi-server MCP architecture where independent MCP 
 
 # Current Status
 
-✅ Active development
+✅ MVP complete
 
 Implemented:
 
@@ -76,10 +76,11 @@ Provisioned resources:
 
 ## Application
 
-* Python 3.12
+* Python 3.12+
 * FastMCP
 * SQLAlchemy
 * PyODBC
+* Rich (terminal UI formatting)
 
 ## Azure Services
 
@@ -110,8 +111,8 @@ The Document MCP Server provides MCP tools for accessing documents stored in Azu
 Configuration:
 
 ```env
-AZURE_STORAGE_ACCOUNT_URL=https://<storage-account>.blob.core.windows.net
-AZURE_STORAGE_CONTAINER_NAME=documents
+AZURE_STORAGE_ACCOUNT_URL=https://<storage-account>.blob.core.windows.net/
+AZURE_STORAGE_CONTAINER_NAME=<container-name>
 ```
 
 ---
@@ -137,7 +138,10 @@ Database:
 Configuration:
 
 ```env
-DATABASE_URL=<azure-sql-connection-string>
+DB_SERVER=<sql-server>.database.windows.net
+DB_DATABASE=<database-name>
+DB_USERNAME=<sql-user>
+DB_PASSWORD=<sql-password>
 ```
 
 In Azure deployment:
@@ -163,6 +167,33 @@ Run locally:
 ```bash
 python -m client.app
 ```
+
+## Example
+
+The MCP Client uses Rich to provide readable terminal output.
+
+Example:
+
+```bash
+========== MCP Client ==========
+
+Documents
+Employees
+Exit
+
+Select server: 2
+
+Employees Tools
+
+| ID | Tool             |
+| -- | ---------------- |
+| 1  | list_employees   |
+| 2  | get_employee     |
+| 3  | search_employees |
+
+```
+
+Tool responses are rendered as formatted tables instead of raw JSON.
 
 ---
 

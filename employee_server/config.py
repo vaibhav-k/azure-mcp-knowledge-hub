@@ -7,7 +7,10 @@ load_dotenv()
 
 class Settings:
 
-    DATABASE_URL = os.getenv("DATABASE_URL", "")
+    DB_SERVER = os.getenv("DB_SERVER", "")
+    DB_DATABASE = os.getenv("DB_DATABASE", "")
+    DB_USERNAME = os.getenv("DB_USERNAME", "")
+    DB_PASSWORD = os.getenv("DB_PASSWORD", "")
 
 
 settings = Settings()

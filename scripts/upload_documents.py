@@ -3,7 +3,7 @@ import os
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
-ACCOUNT_URL = os.getenv("AZURE_STORAGE_ACCOUNT_URL")
+ACCOUNT_URL = os.getenv("AZURE_STORAGE_ACCOUNT_URL", "")
 CONTAINER = os.getenv("AZURE_STORAGE_CONTAINER_NAME", "documents")
 
 

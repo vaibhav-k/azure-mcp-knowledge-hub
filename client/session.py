@@ -17,3 +17,6 @@ class MCPConnection:
 
     async def tools(self):
         return await self.client.list_tools()
+
+    async def call_tool(self, name: str, arguments: dict):
+        return await self.client.call_tool(name, arguments)
