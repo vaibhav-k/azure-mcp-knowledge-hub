@@ -9,21 +9,18 @@ from tools import register_tools
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
 
-logger = logging.getLogger("document-server")
+logger = logging.getLogger("employee-server")
 
 
-mcp = FastMCP("Document Server")
+mcp = FastMCP("Employee Server")
 
 
 register_tools(mcp)
 
 
 def shutdown_handler(signum, frame):
-    """
-    Graceful shutdown handler.
-    """
 
-    logger.info("Stopping Document MCP Server...")
+    logger.info("Stopping Employee MCP Server...")
 
     sys.exit(0)
 
@@ -37,13 +34,13 @@ if __name__ == "__main__":
 
     try:
 
-        logger.info("Starting Document MCP Server")
+        logger.info("Starting Employee MCP Server")
 
         mcp.run()
 
     except KeyboardInterrupt:
 
-        logger.info("Document MCP Server stopped")
+        logger.info("Employee MCP Server stopped")
 
     finally:
 

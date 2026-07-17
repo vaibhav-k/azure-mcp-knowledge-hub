@@ -68,7 +68,7 @@ The Document MCP Server provides MCP tools for accessing documents stored in Azu
 ## Available Tools
 
 | Tool | Description |
-|------|-------------|
+|-|-|
 | `list_documents` | Returns available documents |
 | `search_documents` | Searches documents by name |
 | `get_document` | Retrieves document content |
@@ -204,6 +204,26 @@ azure-mcp-knowledge-hub/
 ├── docs/
 └── README.md
 ```
+---
+
+# Employee MCP Server
+
+The Employee MCP Server exposes employee information through MCP tools.
+
+## Available Tools
+
+| Tool | Description |
+|-|-|
+| `list_employees` | Returns all employees |
+| `get_employee` | Returns employee by ID |
+| `search_employees` | Searches employee records |
+
+## Current Storage
+
+Development mode uses an in-memory database.
+
+Production deployment will use Azure SQL Database.
+
 ---
 
 # Development Roadmap
