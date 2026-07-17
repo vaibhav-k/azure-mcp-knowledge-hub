@@ -171,17 +171,62 @@ Starting MCP server 'Document Server'
 
 # Testing
 
-Run:
+## Document MCP Server Test
+
+Run the test:
 
 ```bash
 python ./tests/test_document_server.py
 ```
 
-Expected:
+Expected output:
 
 ```bash
 Available MCP tools:
 - list_documents
+- search_documents
+- get_document
+```
+
+---
+
+## Employee MCP Server Test
+
+Run:
+
+```bash
+python ./tests/test_employee_server.py
+```
+
+Expected output:
+
+```bash
+Available Employee tools:
+- list_employees
+- get_employee
+- search_employees
+```
+
+## MCP Client Test
+
+Verify that the MCP client can connect to multiple MCP servers:
+
+```bash
+python ./tests/test_client.py
+```
+
+Expected output:
+
+```bash
+Document MCP Server tools:
+- list_documents
+- search_documents
+- get_document
+
+Employee MCP Server tools:
+- list_employees
+- get_employee
+- search_employees
 ```
 
 ---
@@ -223,6 +268,25 @@ The Employee MCP Server exposes employee information through MCP tools.
 Development mode uses an in-memory database.
 
 Production deployment will use Azure SQL Database.
+
+---
+
+# MCP Client
+
+The MCP Client provides a unified interface to multiple MCP servers.
+
+Connected servers:
+
+| Server | Purpose |
+|-|-|
+| Document MCP Server | Azure Blob Storage knowledge |
+| Employee MCP Server | Employee information |
+
+Run:
+
+```bash
+python ./client/app.py
+```
 
 ---
 
