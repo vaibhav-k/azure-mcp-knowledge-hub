@@ -25,6 +25,22 @@ The platform will contain:
 - Azure SQL
 - Azure Bicep
 
+## Document MCP Server
+
+The first MCP server provides access to documents stored in Azure Blob Storage.
+
+### Available Tools
+
+| Tool | Description |
+|------|-------------|
+| list_documents | Lists files from an Azure Blob Storage container |
+
+### Local Run
+
+```bash
+python document_server/app.py
+```
+
 ## Development
 
 Coming soon.

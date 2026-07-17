@@ -5,5 +5,6 @@ mcp = FastMCP("Document Server")
 
 register_tools(mcp)
 
+
 if __name__ == "__main__":
     mcp.run()
