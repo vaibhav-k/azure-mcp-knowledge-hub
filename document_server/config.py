@@ -14,6 +14,7 @@ class Settings:
     AZURE_STORAGE_CONTAINER_NAME: str = os.getenv(
         "AZURE_STORAGE_CONTAINER_NAME", "documents"
     )
+    AZURE_STORAGE_ACCOUNT_KEY = os.getenv("AZURE_STORAGE_ACCOUNT_KEY", "")
 
 
 settings = Settings()

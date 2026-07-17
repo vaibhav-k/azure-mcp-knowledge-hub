@@ -6,12 +6,8 @@ from .router import MCPRouter
 
 
 async def main():
-    document_client = MCPConnection(
-        settings.DOCUMENT_SERVER_COMMAND, settings.DOCUMENT_SERVER_PATH
-    )
-    employee_client = MCPConnection(
-        settings.EMPLOYEE_SERVER_COMMAND, settings.EMPLOYEE_SERVER_PATH
-    )
+    document_client = MCPConnection("python", ["-m", "document_server.app"])
+    employee_client = MCPConnection("python", ["-m", "employee_server.app"])
 
     await document_client.connect()
     await employee_client.connect()
