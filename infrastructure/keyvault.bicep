@@ -1,32 +1,26 @@
 param location string
 
-param environment string
 
+resource keyVault 'Microsoft.KeyVault/vaults@2023-07-01' = {
 
-resource vault 'Microsoft.KeyVault/vaults@2023-07-01' = {
-
-  name: 'azmcp-kv-${environment}-${uniqueString(resourceGroup().id)}'
-
-
+  name: 'azmcpkv${uniqueString(resourceGroup().id)}'
   location: location
-
-
   properties: {
 
     tenantId: subscription().tenantId
-
-
+    enableRbacAuthorization: true
     sku: {
 
       family: 'A'
-
       name: 'standard'
 
     }
 
-
-    enableRbacAuthorization: true
-
   }
 
 }
+
+
+output keyVaultName string = keyVault.name
+
+output keyVaultUri string = keyVault.properties.vaultUri

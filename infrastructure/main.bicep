@@ -2,8 +2,10 @@ targetScope = 'resourceGroup'
 
 
 param location string = resourceGroup().location
-
 param environment string = 'dev'
+
+@secure()
+param databaseUrl string
 
 
 module storage './storage.bicep' = {
@@ -33,7 +35,6 @@ module keyvault './keyvault.bicep' = {
   name: 'keyvault'
   params: {
     location: location
-    environment: environment
   }
 
 }
@@ -56,17 +57,31 @@ module appservice './appservice.bicep' = {
   params: {
     location: location
     environment: environment
+    keyVaultUri: keyvault.outputs.keyVaultUri
+    storageAccountName: storage.outputs.storageAccountName
   }
 
 }
 
 
-module roles './roles.bicep' = {
+// Commented out to avoid RBAC issues
+// module roles './roles.bicep' = {
 
-  name: 'roles'
+//   name: 'roles'
+//   params: {
+//     storageAccountName: storage.outputs.storageAccountName
+//     documentAppPrincipalId: appservice.outputs.documentPrincipalId
+//   }
+
+// }
+
+
+module secrets './secrets.bicep' = {
+
+  name: 'secrets'
   params: {
-    storageAccountName: storage.outputs.storageAccountName
-    documentAppPrincipalId: appservice.outputs.documentPrincipalId
+    keyVaultName: keyvault.outputs.keyVaultName
+    databaseUrl: databaseUrl
   }
 
 }

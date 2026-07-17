@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.45.15.27210",
-      "templateHash": "13428414084330907435"
+      "templateHash": "9036385946272021165"
     }
   },
   "parameters": {
@@ -16,6 +16,9 @@
     "environment": {
       "type": "string",
       "defaultValue": "dev"
+    },
+    "databaseUrl": {
+      "type": "securestring"
     }
   },
   "resources": [
@@ -167,9 +170,6 @@
         "parameters": {
           "location": {
             "value": "[parameters('location')]"
-          },
-          "environment": {
-            "value": "[parameters('environment')]"
           }
         },
         "template": {
@@ -179,14 +179,11 @@
             "_generator": {
               "name": "bicep",
               "version": "0.45.15.27210",
-              "templateHash": "18235430496642773057"
+              "templateHash": "15940540900000517617"
             }
           },
           "parameters": {
             "location": {
-              "type": "string"
-            },
-            "environment": {
               "type": "string"
             }
           },
@@ -194,18 +191,28 @@
             {
               "type": "Microsoft.KeyVault/vaults",
               "apiVersion": "2023-07-01",
-              "name": "[format('azmcp-kv-{0}-{1}', parameters('environment'), uniqueString(resourceGroup().id))]",
+              "name": "[format('azmcpkv{0}', uniqueString(resourceGroup().id))]",
               "location": "[parameters('location')]",
               "properties": {
                 "tenantId": "[subscription().tenantId]",
+                "enableRbacAuthorization": true,
                 "sku": {
                   "family": "A",
                   "name": "standard"
-                },
-                "enableRbacAuthorization": true
+                }
               }
             }
-          ]
+          ],
+          "outputs": {
+            "keyVaultName": {
+              "type": "string",
+              "value": "[format('azmcpkv{0}', uniqueString(resourceGroup().id))]"
+            },
+            "keyVaultUri": {
+              "type": "string",
+              "value": "[reference(resourceId('Microsoft.KeyVault/vaults', format('azmcpkv{0}', uniqueString(resourceGroup().id))), '2023-07-01').vaultUri]"
+            }
+          }
         }
       }
     },
@@ -274,6 +281,12 @@
           },
           "environment": {
             "value": "[parameters('environment')]"
+          },
+          "keyVaultUri": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault'), '2025-04-01').outputs.keyVaultUri.value]"
+          },
+          "storageAccountName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage'), '2025-04-01').outputs.storageAccountName.value]"
           }
         },
         "template": {
@@ -283,7 +296,7 @@
             "_generator": {
               "name": "bicep",
               "version": "0.45.15.27210",
-              "templateHash": "14228484945297908126"
+              "templateHash": "11455954700980947693"
             }
           },
           "parameters": {
@@ -291,6 +304,12 @@
               "type": "string"
             },
             "environment": {
+              "type": "string"
+            },
+            "keyVaultUri": {
+              "type": "string"
+            },
+            "storageAccountName": {
               "type": "string"
             }
           },
@@ -326,6 +345,14 @@
                     {
                       "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
                       "value": "true"
+                    },
+                    {
+                      "name": "AZURE_STORAGE_ACCOUNT_URL",
+                      "value": "[format('https://{0}.blob.{1}/', parameters('storageAccountName'), environment().suffixes.storage)]"
+                    },
+                    {
+                      "name": "AZURE_STORAGE_CONTAINER_NAME",
+                      "value": "documents"
                     }
                   ]
                 }
@@ -351,6 +378,10 @@
                     {
                       "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
                       "value": "true"
+                    },
+                    {
+                      "name": "DATABASE_URL",
+                      "value": "[format('@Microsoft.KeyVault(SecretUri={0}secrets/database-url/)', parameters('keyVaultUri'))]"
                     }
                   ]
                 }
@@ -379,23 +410,27 @@
             }
           }
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'keyvault')]",
+        "[resourceId('Microsoft.Resources/deployments', 'storage')]"
+      ]
     },
     {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
-      "name": "roles",
+      "name": "secrets",
       "properties": {
         "expressionEvaluationOptions": {
           "scope": "inner"
         },
         "mode": "Incremental",
         "parameters": {
-          "storageAccountName": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'storage'), '2025-04-01').outputs.storageAccountName.value]"
+          "keyVaultName": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'keyvault'), '2025-04-01').outputs.keyVaultName.value]"
           },
-          "documentAppPrincipalId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appservice'), '2025-04-01').outputs.documentPrincipalId.value]"
+          "databaseUrl": {
+            "value": "[parameters('databaseUrl')]"
           }
         },
         "template": {
@@ -405,35 +440,31 @@
             "_generator": {
               "name": "bicep",
               "version": "0.45.15.27210",
-              "templateHash": "14400204931525484648"
+              "templateHash": "6159057603742841539"
             }
           },
           "parameters": {
-            "storageAccountName": {
+            "keyVaultName": {
               "type": "string"
             },
-            "documentAppPrincipalId": {
+            "databaseUrl": {
               "type": "string"
             }
           },
           "resources": [
             {
-              "type": "Microsoft.Authorization/roleAssignments",
-              "apiVersion": "2022-04-01",
-              "scope": "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
-              "name": "[guid(resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName')), parameters('documentAppPrincipalId'), 'blob-reader')]",
+              "type": "Microsoft.KeyVault/vaults/secrets",
+              "apiVersion": "2023-07-01",
+              "name": "[format('{0}/{1}', parameters('keyVaultName'), 'database-url')]",
               "properties": {
-                "roleDefinitionId": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions', '2a2b9908-6ea1-4ae2-8e65-a410df84e7d1')]",
-                "principalId": "[parameters('documentAppPrincipalId')]",
-                "principalType": "ServicePrincipal"
+                "value": "[parameters('databaseUrl')]"
               }
             }
           ]
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'appservice')]",
-        "[resourceId('Microsoft.Resources/deployments', 'storage')]"
+        "[resourceId('Microsoft.Resources/deployments', 'keyvault')]"
       ]
     }
   ]
