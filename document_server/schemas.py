@@ -1,11 +1,13 @@
 from pydantic import BaseModel
 
 
-class DocumentResult(BaseModel):
+class DocumentMetadata(BaseModel):
     """
-    Represents a document stored in Azure Blob Storage.
+    Azure Blob document metadata.
     """
 
-    filename: str
-    blob_url: str | None = None
-    snippet: str | None = None
+    name: str
+    size: int | None = None
+    content_type: str | None = None
+    last_modified: str | None = None
+    url: str | None = None

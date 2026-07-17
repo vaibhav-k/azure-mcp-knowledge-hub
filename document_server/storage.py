@@ -1,34 +1,55 @@
-import os
-
-from dotenv import load_dotenv
-
 from azure.identity import DefaultAzureCredential
 from azure.storage.blob import BlobServiceClient
 
-load_dotenv()
+from config import settings
+from schemas import DocumentMetadata
 
 
 class BlobStorage:
     """
-    Azure Blob Storage service wrapper.
+    Azure Blob Storage abstraction.
     """
 
     def __init__(self):
 
-        account_url = os.getenv("AZURE_STORAGE_ACCOUNT_URL")
-
-        if not account_url:
-            raise ValueError("AZURE_STORAGE_ACCOUNT_URL is not configured")
+        if not settings.AZURE_STORAGE_ACCOUNT_URL:
+            raise ValueError("AZURE_STORAGE_ACCOUNT_URL is missing")
 
         self.client = BlobServiceClient(
-            account_url=account_url, credential=DefaultAzureCredential()
+            account_url=settings.AZURE_STORAGE_ACCOUNT_URL,
+            credential=DefaultAzureCredential(),
         )
 
-    def list_documents(self, container_name: str) -> list[str]:
+    def list_documents(
+        self, container_name: str | None = None
+    ) -> list[DocumentMetadata]:
         """
-        Returns document names from a blob container.
+        List documents from Azure Blob Storage.
         """
+
+        container_name = container_name or settings.AZURE_STORAGE_CONTAINER_NAME
 
         container = self.client.get_container_client(container_name)
 
-        return [blob.name for blob in container.list_blobs()]
+        documents = []
+
+        for blob in container.list_blobs():
+
+            documents.append(
+                DocumentMetadata(
+                    name=blob.name,
+                    size=blob.size,
+                    content_type=(
+                        blob.content_settings.content_type
+                        if blob.content_settings
+                        else None
+                    ),
+                    last_modified=str(blob.last_modified),
+                    url=(
+                        f"{settings.AZURE_STORAGE_ACCOUNT_URL}"
+                        f"/{container_name}/{blob.name}"
+                    ),
+                )
+            )
+
+        return documents

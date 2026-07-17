@@ -16,9 +16,11 @@ def get_storage():
 def register_tools(mcp):
 
     @mcp.tool()
-    def list_documents(container_name: str) -> list[str]:
+    def list_documents(container_name: str | None = None):
         """
         List documents from Azure Blob Storage.
+
+        Returns document metadata.
         """
 
         storage = get_storage()
